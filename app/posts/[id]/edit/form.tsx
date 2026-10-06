@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { useToast } from "@/app/toast";
-import { imageUrl, POST_IMAGES_BUCKET, type Post } from "@/utils/posts";
+import { imageUrl, POST_IMAGES_BUCKET, type Category, type Post } from "@/utils/posts";
+import { CategoryPicker } from "@/app/category-picker";
 
 const MAX_SIZE = 10 * 1024 * 1024;
 
@@ -14,6 +15,7 @@ export function EditForm({ post }: { post: Post }) {
   const showToast = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [category, setCategory] = useState<Category>(post.category);
   const [title, setTitle] = useState(post.title);
   const [content, setContent] = useState(post.content);
   const [submitting, setSubmitting] = useState(false);
@@ -25,7 +27,8 @@ export function EditForm({ post }: { post: Post }) {
     };
   }, [preview]);
 
-  const changed = !!file || title.trim() !== post.title || content.trim() !== post.content;
+  const changed =
+    !!file || category !== post.category || title.trim() !== post.title || content.trim() !== post.content;
   const canSubmit = title.trim().length > 0 && changed && !submitting;
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,7 +69,7 @@ export function EditForm({ post }: { post: Post }) {
     // RLS로 본인 글만 수정되므로, 실제로 수정된 행이 있는지 확인한다
     const { data, error: updateError } = await supabase
       .from("posts")
-      .update({ title: title.trim(), content: content.trim(), image_path: imagePath })
+      .update({ title: title.trim(), content: content.trim(), image_path: imagePath, category })
       .eq("id", post.id)
       .select("id");
 
@@ -105,6 +108,8 @@ export function EditForm({ post }: { post: Post }) {
         </label>
         <p className="mt-2 text-xs text-muted">사진을 클릭하면 다른 사진으로 바꿀 수 있습니다 (최대 10MB)</p>
       </div>
+
+      <CategoryPicker value={category} onChange={setCategory} />
 
       <div>
         <label htmlFor="title" className="mb-2 block text-sm font-semibold">

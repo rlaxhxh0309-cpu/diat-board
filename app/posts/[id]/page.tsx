@@ -8,6 +8,7 @@ import { createClient } from "@/utils/supabase/server";
 import { COMMENT_SELECT, formatDate, imageUrl, UUID_RE, type Comment, type Post } from "@/utils/posts";
 import type { Author } from "@/utils/profile";
 import { Avatar } from "@/app/avatar";
+import { CategoryBadge } from "@/app/category-badge";
 import { Reactions } from "./reactions";
 import { DeletePostButton } from "./delete-button";
 import { pageMetadata } from "@/utils/metadata";
@@ -95,7 +96,10 @@ export default async function Page(props: PageProps<"/posts/[id]">) {
           />
         </div>
         <div className="p-5 sm:p-8">
-          <h1 className="text-2xl font-bold break-words">{post.title}</h1>
+          <Link href={`/board?category=${post.category}`} className="inline-block transition hover:opacity-80">
+            <CategoryBadge category={post.category} />
+          </Link>
+          <h1 className="mt-3 text-2xl font-bold break-words">{post.title}</h1>
           <div className="mt-3 flex items-center gap-2 text-sm text-muted">
             <Avatar src={post.profiles?.avatar_url} name={post.profiles?.nickname || "?"} size={28} />
             <span className="font-semibold text-ink">{post.profiles?.nickname || "알 수 없음"}</span>
@@ -115,6 +119,7 @@ export default async function Page(props: PageProps<"/posts/[id]">) {
       <Reactions
         postId={post.id}
         userId={user?.id ?? null}
+        postAuthorId={post.user_id}
         initialLikeCount={likeCount ?? 0}
         initialLiked={!!myLike}
         initialComments={comments ?? []}

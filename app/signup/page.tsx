@@ -57,7 +57,7 @@ export default function SignupPage() {
 
     setSubmitting(true);
     const supabase = createClient();
-    // 상단바(AuthNav)는 user_metadata.name을 표시한다
+    // 가입 트리거가 user_metadata.name으로 프로필 닉네임을 만든다 (상단바에 표시됨)
     const { error } = await supabase.auth.signUp({
       email: email.trim(),
       password,

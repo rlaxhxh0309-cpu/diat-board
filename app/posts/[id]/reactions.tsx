@@ -12,12 +12,14 @@ const MAX_COMMENT = 500;
 export function Reactions({
   postId,
   userId,
+  postAuthorId,
   initialLikeCount,
   initialLiked,
   initialComments,
 }: {
   postId: string;
   userId: string | null;
+  postAuthorId: string | null;
   initialLikeCount: number;
   initialLiked: boolean;
   initialComments: Comment[];
@@ -29,6 +31,17 @@ export function Reactions({
   const [comments, setComments] = useState(initialComments);
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [replyTo, setReplyTo] = useState<number | null>(null);
+  const [replyContent, setReplyContent] = useState("");
+  const [replying, setReplying] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editContent, setEditContent] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  // 대댓글은 게시글 작성자만 달 수 있다 (DB 정책과 같은 조건)
+  const canReply = !!userId && userId === postAuthorId;
+  const topLevel = comments.filter((c) => c.parent_id === null);
+  const repliesOf = (id: number) => comments.filter((c) => c.parent_id === id);
 
   const onToggleLike = async () => {
     if (!userId) {
@@ -92,8 +105,127 @@ export function Reactions({
       showToast("댓글 삭제에 실패했습니다. 잠시 후 다시 시도해 주세요.");
       return;
     }
-    setComments((prev) => prev.filter((c) => c.id !== id));
+    // 댓글을 지우면 달린 대댓글도 DB에서 함께 지워진다
+    setComments((prev) => prev.filter((c) => c.id !== id && c.parent_id !== id));
   };
+
+  const onSubmitReply = async (e: React.FormEvent, parentId: number) => {
+    e.preventDefault();
+    const trimmed = replyContent.trim();
+    if (!trimmed || replying) return;
+    setReplying(true);
+
+    const { data, error } = await createClient()
+      .from("comments")
+      .insert({ post_id: postId, parent_id: parentId, content: trimmed })
+      .select(COMMENT_SELECT)
+      .single<Comment>();
+
+    if (error || !data) {
+      showToast("답글 등록에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+    } else {
+      setComments((prev) => [...prev, data]);
+      setReplyContent("");
+      setReplyTo(null);
+      showToast("답글을 남겼습니다", "success");
+    }
+    setReplying(false);
+  };
+
+  const onSubmitEdit = async (e: React.FormEvent, id: number) => {
+    e.preventDefault();
+    const trimmed = editContent.trim();
+    if (!trimmed || saving) return;
+    setSaving(true);
+
+    const { data, error } = await createClient()
+      .from("comments")
+      .update({ content: trimmed })
+      .eq("id", id)
+      .select(COMMENT_SELECT)
+      .single<Comment>();
+
+    if (error || !data) {
+      showToast("댓글 수정에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+    } else {
+      setComments((prev) => prev.map((c) => (c.id === id ? data : c)));
+      setEditingId(null);
+      showToast("댓글을 수정했습니다", "success");
+    }
+    setSaving(false);
+  };
+
+  const commentView = (c: Comment, avatarSize: number) => (
+    <>
+      <div className="flex items-center gap-2 text-xs text-muted">
+        <Avatar src={c.profiles?.avatar_url} name={c.profiles?.nickname || "?"} size={avatarSize} />
+        <span className="font-semibold text-ink">{c.profiles?.nickname || "알 수 없음"}</span>
+        {c.user_id === postAuthorId && (
+          <span className="rounded-full bg-brand-soft px-2 py-0.5 font-semibold text-brand">글쓴이</span>
+        )}
+        <span>
+          {formatDateTime(c.created_at)}
+          {c.updated_at && " (수정됨)"}
+        </span>
+        {c.user_id === userId && editingId !== c.id && (
+          <span className="ml-auto flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setEditingId(c.id);
+                setEditContent(c.content);
+              }}
+              className="cursor-pointer hover:text-brand"
+            >
+              수정
+            </button>
+            <button
+              type="button"
+              onClick={() => onDeleteComment(c.id)}
+              className="cursor-pointer hover:text-red-600"
+            >
+              삭제
+            </button>
+          </span>
+        )}
+      </div>
+      {editingId === c.id ? (
+        <form onSubmit={(e) => onSubmitEdit(e, c.id)} className="mt-2 space-y-2">
+          <textarea
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            maxLength={MAX_COMMENT}
+            rows={2}
+            autoFocus
+            className="input-field resize-y text-sm"
+          />
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted">
+              {editContent.length}/{MAX_COMMENT}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setEditingId(null)}
+                className="cursor-pointer px-3 py-2 text-sm text-muted transition hover:text-ink"
+              >
+                취소
+              </button>
+              <button
+                type="submit"
+                disabled={!editContent.trim() || editContent.trim() === c.content || saving}
+                className="btn-primary px-4 py-2 text-sm"
+              >
+                {saving ? "저장 중..." : "수정 완료"}
+              </button>
+            </div>
+          </div>
+        </form>
+      ) : (
+        <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6">{c.content}</p>
+      )}
+    </>
+  );
 
   return (
     <>
@@ -123,27 +255,71 @@ export function Reactions({
           <p className="mt-3 text-sm text-muted">첫 응원 댓글을 남겨 주세요! 💪</p>
         ) : (
           <ul className="mt-3 divide-y divide-line">
-            {comments.map((c) => (
-              <li key={c.id} className="py-4">
-                <div className="flex items-center gap-2 text-xs text-muted">
-                  <Avatar src={c.profiles?.avatar_url} name={c.profiles?.nickname || "?"} size={24} />
-                  <span className="font-semibold text-ink">
-                    {c.profiles?.nickname || "알 수 없음"}
-                  </span>
-                  <span>{formatDateTime(c.created_at)}</span>
-                  {c.user_id === userId && (
+            {topLevel.map((c) => {
+              const replies = repliesOf(c.id);
+              return (
+                <li key={c.id} className="py-4">
+                  {commentView(c, 24)}
+                  {canReply && replyTo !== c.id && (
                     <button
                       type="button"
-                      onClick={() => onDeleteComment(c.id)}
-                      className="ml-auto cursor-pointer hover:text-red-600"
+                      onClick={() => {
+                        setReplyTo(c.id);
+                        setReplyContent("");
+                      }}
+                      className="mt-1 cursor-pointer text-xs font-semibold text-muted transition hover:text-brand"
                     >
-                      삭제
+                      답글 달기
                     </button>
                   )}
-                </div>
-                <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6">{c.content}</p>
-              </li>
-            ))}
+
+                  {replies.length > 0 && (
+                    <ul className="mt-3 space-y-3 border-l-2 border-brand-soft pl-4">
+                      {replies.map((r) => (
+                        <li key={r.id}>
+                          {commentView(r, 20)}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {canReply && replyTo === c.id && (
+                    <form onSubmit={(e) => onSubmitReply(e, c.id)} className="mt-3 space-y-2 pl-4">
+                      <textarea
+                        value={replyContent}
+                        onChange={(e) => setReplyContent(e.target.value)}
+                        maxLength={MAX_COMMENT}
+                        rows={2}
+                        autoFocus
+                        placeholder="응원에 고마운 마음을 전해 보세요"
+                        className="input-field resize-y text-sm"
+                      />
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted">
+                          {replyContent.length}/{MAX_COMMENT}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setReplyTo(null)}
+                            className="cursor-pointer px-3 py-2 text-sm text-muted transition hover:text-ink"
+                          >
+                            취소
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={!replyContent.trim() || replying}
+                            className="btn-primary px-4 py-2 text-sm"
+                          >
+                            {replying ? "등록 중..." : "답글 등록"}
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
 

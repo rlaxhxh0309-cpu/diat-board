@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { rootMetadata } from "@/utils/metadata";
+import { Suspense } from "react";
 import Link from "next/link";
 import { ToastProvider } from "./toast";
 import { HeaderNav } from "./header-nav";
@@ -25,15 +26,19 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="flex min-h-full flex-col">
         <ToastProvider>
-          <header className="sticky top-0 z-40 border-b border-line bg-white/90 backdrop-blur">
+          {/* backdrop-filter를 쓰면 모바일 메뉴의 fixed 배경이 헤더 안에 갇히므로 불투명 배경을 쓴다 */}
+          <header className="sticky top-0 z-40 border-b border-line bg-white">
             <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-3 px-4">
-              <Link href="/" className="flex shrink-0 items-center gap-1.5 text-lg font-bold text-ink">
+              <Link href="/" aria-label="다이어트 사진 게시판 홈" className="flex shrink-0 items-center gap-1.5 text-lg font-bold text-ink">
                 <span aria-hidden="true" className="flex h-8 w-8 items-center justify-center rounded-2xl bg-brand text-base text-white">
                   🌱
                 </span>
                 <span className="hidden sm:inline">다이어트 사진 게시판</span>
               </Link>
-              <HeaderNav />
+              {/* HeaderNav는 현재 카테고리를 알기 위해 useSearchParams를 쓴다 */}
+              <Suspense>
+                <HeaderNav />
+              </Suspense>
             </div>
           </header>
           <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:py-10">{children}</main>

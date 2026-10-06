@@ -3,11 +3,12 @@ import Link from "next/link";
 import { formatDate, imageUrl, type Post } from "@/utils/posts";
 import type { Author } from "@/utils/profile";
 import { Avatar } from "@/app/avatar";
+import { CategoryBadge } from "@/app/category-badge";
 
 // 게시판 목록과 랜딩의 최근 게시글이 함께 쓰는 게시글 카드
 
 export const POST_LIST_SELECT =
-  "id, title, image_path, created_at, profiles(nickname, avatar_url), likes(count), comments(count)";
+  "id, title, image_path, created_at, category, profiles(nickname, avatar_url), likes(count), comments(count)";
 
 export type PostListItem = Omit<Post, "content" | "user_id"> & {
   profiles: Author;
@@ -38,6 +39,7 @@ export function PhotoGrid({
                 sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
                 className="object-cover transition group-hover:scale-105"
               />
+              <CategoryBadge category={post.category} className="absolute top-2 left-2 shadow-card sm:top-3 sm:left-3" />
             </div>
             <div className="p-3 sm:p-4">
               <h2 className="truncate font-bold">{post.title}</h2>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import { pageMetadata, SITE_NAME } from "@/utils/metadata";
+import type { Category } from "@/utils/posts";
 import { PhotoGrid, POST_LIST_SELECT, type PostListItem } from "@/app/post-cards";
 import heroImage from "@/public/images/AdobeStock_519895333.jpeg";
 
@@ -44,22 +45,27 @@ const RECENT_COUNT = 6;
 
 export default async function Page() {
   const supabase = createClient(await cookies());
+  const latestPosts = (category?: Category) => {
+    let query = supabase.from("posts").select(POST_LIST_SELECT);
+    if (category) query = query.eq("category", category);
+    return query
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(RECENT_COUNT)
+      .overrideTypes<PostListItem[], { merge: false }>();
+  };
   const [
     {
       data: { user },
     },
+    { data: successPosts },
     { data: recentPosts },
-  ] = await Promise.all([
-    supabase.auth.getUser(),
-    supabase
-      .from("posts")
-      .select(POST_LIST_SELECT)
-      .order("created_at", { ascending: false })
-      .order("id", { ascending: false })
-      .limit(RECENT_COUNT)
-      .overrideTypes<PostListItem[], { merge: false }>(),
-  ]);
+  ] = await Promise.all([supabase.auth.getUser(), latestPosts("success"), latestPosts()]);
   const loggedIn = !!user;
+
+  // "해냈어요" 성공 후기를 먼저 보여주고, 없으면 최근 게시글로 대신한다
+  const showSuccess = !!successPosts?.length;
+  const previewPosts = showSuccess ? successPosts : recentPosts;
 
   return (
     <div className="space-y-16 sm:space-y-24">
@@ -151,17 +157,24 @@ export default async function Page() {
         </ol>
       </section>
 
-      {/* 4. 최근 게시글 미리보기 */}
+      {/* 4. 성공 후기(없으면 최근 게시글) 미리보기 */}
       <section>
         <div className="flex items-end justify-between gap-4">
-          <SectionTitle eyebrow="최근 기록" title="지금 올라온 다이어트 기록" align="left" />
-          <Link href="/board" className="shrink-0 text-sm font-semibold text-brand hover:underline">
+          {showSuccess ? (
+            <SectionTitle eyebrow="🏆 해냈어요" title="먼저 해낸 사람들의 성공 후기" align="left" />
+          ) : (
+            <SectionTitle eyebrow="최근 기록" title="지금 올라온 다이어트 기록" align="left" />
+          )}
+          <Link
+            href={showSuccess ? "/board?category=success" : "/board"}
+            className="shrink-0 text-sm font-semibold text-brand hover:underline"
+          >
             더 보기 →
           </Link>
         </div>
         <div className="mt-8">
-          {recentPosts?.length ? (
-            <PhotoGrid posts={recentPosts} gridClassName="grid-cols-2 sm:grid-cols-3" />
+          {previewPosts?.length ? (
+            <PhotoGrid posts={previewPosts} gridClassName="grid-cols-2 sm:grid-cols-3" />
           ) : (
             <div className="card flex flex-col items-center px-6 py-14 text-center text-muted">
               <span aria-hidden="true" className="text-4xl">🥗</span>

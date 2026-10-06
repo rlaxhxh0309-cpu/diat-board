@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { POST_IMAGES_BUCKET } from "@/utils/posts";
+import { POST_IMAGES_BUCKET, type Category } from "@/utils/posts";
+import { CategoryPicker } from "@/app/category-picker";
 import { useToast } from "@/app/toast";
 import { GUEST_WRITE_MESSAGE } from "@/app/write-button";
 
@@ -15,6 +16,7 @@ export default function WritePage() {
   const [authChecked, setAuthChecked] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [category, setCategory] = useState<Category | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -45,7 +47,7 @@ export default function WritePage() {
     };
   }, [preview]);
 
-  const canSubmit = !!file && title.trim().length > 0 && !submitting;
+  const canSubmit = !!file && !!category && title.trim().length > 0 && !submitting;
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
@@ -62,7 +64,7 @@ export default function WritePage() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file || !title.trim()) return;
+    if (!file || !category || !title.trim()) return;
     setSubmitting(true);
     setError(null);
 
@@ -82,7 +84,7 @@ export default function WritePage() {
 
     const { data, error: insertError } = await supabase
       .from("posts")
-      .insert({ title: title.trim(), content: content.trim(), image_path: path })
+      .insert({ title: title.trim(), content: content.trim(), image_path: path, category })
       .select("id")
       .single();
 
@@ -126,6 +128,8 @@ export default function WritePage() {
           />
         </label>
       </div>
+
+      <CategoryPicker value={category} onChange={setCategory} />
 
       <div>
         <label htmlFor="title" className="mb-2 block text-sm font-semibold">
