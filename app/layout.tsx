@@ -1,4 +1,5 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { rootMetadata } from "@/utils/metadata";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ToastProvider } from "./toast";
@@ -15,9 +16,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "다이어트 사진 게시판",
-  description: "다이어트 기록을 사진으로 공유하는 게시판",
+// 아이콘은 app/favicon.ico, 대표 썸네일은 app/opengraph-image.tsx가 자동으로 연결된다
+export const metadata: Metadata = rootMetadata;
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

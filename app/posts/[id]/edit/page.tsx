@@ -2,7 +2,18 @@ import { notFound, redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import { UUID_RE, type Post } from "@/utils/posts";
+import { pageMetadata } from "@/utils/metadata";
 import { EditForm } from "./form";
+
+export async function generateMetadata(props: PageProps<"/posts/[id]/edit">) {
+  const { id } = await props.params;
+  return pageMetadata({
+    title: "글 수정",
+    description: "게시글의 사진, 제목, 내용을 수정합니다.",
+    path: `/posts/${id}/edit`,
+    noindex: true,
+  });
+}
 
 export default async function Page(props: PageProps<"/posts/[id]/edit">) {
   const { id } = await props.params;

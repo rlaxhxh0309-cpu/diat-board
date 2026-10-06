@@ -1,3 +1,5 @@
+import { cache } from "react";
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,21 +10,55 @@ import type { Author } from "@/utils/profile";
 import { Avatar } from "@/app/avatar";
 import { Reactions } from "./reactions";
 import { DeletePostButton } from "./delete-button";
+import { pageMetadata } from "@/utils/metadata";
 
-export default async function Page(props: PageProps<"/posts/[id]">) {
-  const { id } = await props.params;
-  if (!UUID_RE.test(id)) notFound();
-
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-
-  const { data: post } = await supabase
+// generateMetadata와 페이지가 같은 글을 한 번만 조회하도록 캐시한다
+const getPost = cache(async (id: string) => {
+  if (!UUID_RE.test(id)) return null;
+  const supabase = createClient(await cookies());
+  const { data } = await supabase
     .from("posts")
     .select("*, profiles(nickname, avatar_url)")
     .eq("id", id)
     .maybeSingle<Post & { profiles: Author }>();
+  return data;
+});
 
+export async function generateMetadata(props: PageProps<"/posts/[id]">): Promise<Metadata> {
+  const { id } = await props.params;
+  const post = await getPost(id);
+  if (!post) return { title: "게시글을 찾을 수 없습니다", robots: { index: false } };
+
+  const author = post.profiles?.nickname;
+  const summary = post.content.replace(/\s+/g, " ").trim();
+  const description =
+    (summary.length > 100 ? `${summary.slice(0, 100)}…` : summary) ||
+    `${author ? `${author}님의 ` : ""}다이어트 기록을 확인하고 응원 댓글을 남겨 보세요.`;
+  const base = pageMetadata({ title: post.title, description, path: `/posts/${post.id}` });
+
+  // 링크 썸네일은 게시글 사진을 쓴다
+  const image = { url: imageUrl(post.image_path), alt: post.title };
+  return {
+    ...base,
+    authors: author ? [{ name: author }] : undefined,
+    openGraph: {
+      ...base.openGraph,
+      type: "article",
+      publishedTime: post.created_at,
+      authors: author ? [author] : undefined,
+      images: [image],
+    },
+    twitter: { ...base.twitter, images: [image] },
+  };
+}
+
+export default async function Page(props: PageProps<"/posts/[id]">) {
+  const { id } = await props.params;
+  const post = await getPost(id);
   if (!post) notFound();
+
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
 
   const {
     data: { user },
