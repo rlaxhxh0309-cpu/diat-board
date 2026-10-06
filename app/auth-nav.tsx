@@ -9,8 +9,7 @@ import { useToast } from "@/app/toast";
 import { Avatar } from "@/app/avatar";
 import { displayName, getOrCreateProfile, PROFILE_UPDATED_EVENT, type Profile } from "@/utils/profile";
 
-const linkClass =
-  "text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white";
+const linkClass = "shrink-0 text-sm text-muted transition hover:text-brand";
 
 export function AuthNav() {
   const router = useRouter();
@@ -62,9 +61,9 @@ export function AuthNav() {
     const name = displayName(profile?.nickname, user.email);
     return (
       <>
-        <span className="flex max-w-32 items-center gap-1.5 text-sm text-neutral-500 sm:max-w-48">
-          <Avatar src={profile?.avatar_url} name={name} size={24} />
-          <span className="truncate">{name}</span>
+        <span className="flex max-w-48 items-center gap-1.5 text-sm font-medium text-ink">
+          <Avatar src={profile?.avatar_url} name={name} size={28} />
+          <span className="hidden truncate sm:inline">{name}</span>
         </span>
         <Link href="/profile" className={linkClass}>
           내 정보

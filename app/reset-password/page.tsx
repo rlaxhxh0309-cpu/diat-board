@@ -17,9 +17,6 @@ const toKoreanMessage = (error: AuthError) =>
   (error.code && ERROR_MESSAGES[error.code]) ||
   "비밀번호 변경에 실패했습니다. 잠시 후 다시 시도해 주세요.";
 
-const inputClass =
-  "w-full rounded-lg border border-neutral-300 bg-transparent px-3 py-2 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-300";
-
 export default function ResetPasswordPage() {
   const router = useRouter();
   const showToast = useToast();
@@ -68,18 +65,18 @@ export default function ResetPasswordPage() {
     }
 
     showToast("비밀번호가 변경되었습니다", "success");
-    router.push("/");
+    router.push("/board");
     router.refresh();
   };
 
   if (!ready) return null;
 
   return (
-    <form onSubmit={onSubmit} noValidate className="mx-auto max-w-sm space-y-5 pt-8">
+    <form onSubmit={onSubmit} noValidate className="card mx-auto max-w-md space-y-5 p-6 sm:mt-4 sm:p-8">
       <h1 className="text-2xl font-bold">비밀번호 재설정</h1>
 
       <div>
-        <label htmlFor="password" className="mb-2 block text-sm font-medium">
+        <label htmlFor="password" className="mb-2 block text-sm font-semibold">
           새 비밀번호
         </label>
         <input
@@ -89,12 +86,12 @@ export default function ResetPasswordPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="6자 이상"
-          className={inputClass}
+          className="input-field"
         />
       </div>
 
       <div>
-        <label htmlFor="passwordConfirm" className="mb-2 block text-sm font-medium">
+        <label htmlFor="passwordConfirm" className="mb-2 block text-sm font-semibold">
           새 비밀번호 확인
         </label>
         <input
@@ -104,14 +101,14 @@ export default function ResetPasswordPage() {
           value={passwordConfirm}
           onChange={(e) => setPasswordConfirm(e.target.value)}
           placeholder="새 비밀번호를 한 번 더 입력하세요"
-          className={inputClass}
+          className="input-field"
         />
       </div>
 
       <button
         type="submit"
         disabled={!canSubmit}
-        className="w-full rounded-lg bg-neutral-900 py-3 font-medium text-white transition hover:bg-neutral-700 disabled:cursor-not-allowed disabled:bg-neutral-300 dark:bg-white dark:text-neutral-900 dark:disabled:bg-neutral-700 dark:disabled:text-neutral-400"
+        className="btn-primary w-full"
       >
         {submitting ? "변경 중..." : "비밀번호 변경"}
       </button>

@@ -86,14 +86,14 @@ export function EditForm({ post }: { post: Post }) {
   };
 
   return (
-    <form onSubmit={onSubmit} className="mx-auto max-w-2xl space-y-6">
+    <form onSubmit={onSubmit} className="card mx-auto max-w-2xl space-y-6 p-5 sm:p-8">
       <h1 className="text-2xl font-bold">글 수정</h1>
 
       <div>
-        <span className="mb-2 block text-sm font-medium">
-          사진 <span className="text-red-500">*</span>
+        <span className="mb-2 block text-sm font-semibold">
+          사진 <span className="text-coral">*</span>
         </span>
-        <label className="flex aspect-video cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 hover:border-neutral-400 dark:border-neutral-700 dark:bg-neutral-900">
+        <label className="flex aspect-[4/3] cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-line bg-page transition hover:border-brand hover:bg-brand-soft/40 has-[:focus-visible]:border-brand has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-brand/20 sm:aspect-video">
           {/* eslint-disable-next-line @next/next/no-img-element -- 로컬 blob 미리보기와 기존 사진 */}
           <img src={preview ?? imageUrl(post.image_path)} alt="미리보기" className="h-full w-full object-contain" />
           <input
@@ -103,12 +103,12 @@ export function EditForm({ post }: { post: Post }) {
             className="sr-only"
           />
         </label>
-        <p className="mt-2 text-xs text-neutral-500">사진을 클릭하면 다른 사진으로 바꿀 수 있습니다 (최대 10MB)</p>
+        <p className="mt-2 text-xs text-muted">사진을 클릭하면 다른 사진으로 바꿀 수 있습니다 (최대 10MB)</p>
       </div>
 
       <div>
-        <label htmlFor="title" className="mb-2 block text-sm font-medium">
-          제목 <span className="text-red-500">*</span>
+        <label htmlFor="title" className="mb-2 block text-sm font-semibold">
+          제목 <span className="text-coral">*</span>
         </label>
         <input
           id="title"
@@ -116,12 +116,12 @@ export function EditForm({ post }: { post: Post }) {
           onChange={(e) => setTitle(e.target.value)}
           maxLength={100}
           placeholder="제목을 입력하세요"
-          className="w-full rounded-lg border border-neutral-300 bg-transparent px-3 py-2 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-300"
+          className="input-field"
         />
       </div>
 
       <div>
-        <label htmlFor="content" className="mb-2 block text-sm font-medium">
+        <label htmlFor="content" className="mb-2 block text-sm font-semibold">
           내용
         </label>
         <textarea
@@ -131,23 +131,23 @@ export function EditForm({ post }: { post: Post }) {
           maxLength={5000}
           rows={8}
           placeholder="오늘의 식단, 운동, 변화 등을 기록해 보세요"
-          className="w-full resize-y rounded-lg border border-neutral-300 bg-transparent px-3 py-2 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-300"
+          className="input-field resize-y"
         />
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="rounded-2xl bg-coral-soft px-4 py-3 text-sm text-red-600">{error}</p>}
 
       <div className="flex gap-3">
         <Link
           href={`/posts/${post.id}`}
-          className="flex-1 rounded-lg border border-neutral-300 py-3 text-center font-medium transition hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
+          className="btn-secondary flex-1"
         >
           취소
         </Link>
         <button
           type="submit"
           disabled={!canSubmit}
-          className="flex-1 rounded-lg bg-neutral-900 py-3 font-medium text-white transition hover:bg-neutral-700 disabled:cursor-not-allowed disabled:bg-neutral-300 dark:bg-white dark:text-neutral-900 dark:disabled:bg-neutral-700 dark:disabled:text-neutral-400"
+          className="btn-primary flex-1"
         >
           {submitting ? "수정 중..." : "수정 완료"}
         </button>

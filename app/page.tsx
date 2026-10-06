@@ -1,237 +1,205 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
-import { formatDate, imageUrl, type Post } from "@/utils/posts";
-import type { Author } from "@/utils/profile";
-import { Avatar } from "./avatar";
+import { pageMetadata, SITE_NAME } from "@/utils/metadata";
+import { PhotoGrid, POST_LIST_SELECT, type PostListItem } from "@/app/post-cards";
+import heroImage from "@/public/images/AdobeStock_519895333.jpeg";
 
-type PostListItem = Omit<Post, "content" | "user_id"> & {
-  profiles: Author;
-  likes: { count: number }[];
-  comments: { count: number }[];
+const HEADLINE = "혼자 하면 힘든 다이어트, 같이 기록해요";
+const SUBHEADLINE = "오늘 먹은 식단과 운동, 몸의 변화를 사진으로 남기고 서로 응원하며 끝까지 함께해요.";
+
+export const metadata: Metadata = {
+  ...pageMetadata({ title: HEADLINE, description: SUBHEADLINE, path: "/" }),
+  // 첫 화면은 템플릿("… | 사이트명") 대신 사이트명이 앞에 오도록
+  title: { absolute: `${SITE_NAME} - ${HEADLINE}` },
 };
 
-// photo: 사진 카드, title: 제목 목록
-type View = "photo" | "title";
+const FEATURES = [
+  {
+    emoji: "📸",
+    title: "사진으로 기록하기",
+    description: "식단, 운동 인증, 거울 셀카까지. 글보다 사진 한 장이 오늘의 노력을 더 잘 보여줘요.",
+  },
+  {
+    emoji: "💚",
+    title: "서로 응원하기",
+    description: "좋아요와 응원 댓글로 힘을 주고받아요. 누군가 지켜봐 준다는 게 꾸준함의 비결이에요.",
+  },
+  {
+    emoji: "📈",
+    title: "내 변화 모아보기",
+    description: "차곡차곡 쌓인 기록을 돌아보면, 어제보다 나아진 내 모습이 한눈에 보여요.",
+  },
+];
 
-const PAGE_SIZE = 8;
+const STEPS = [
+  { emoji: "✍️", title: "가입하기", description: "이메일이나 카카오 계정으로 10초 만에 시작해요." },
+  { emoji: "📷", title: "사진 올리기", description: "오늘의 식단이나 운동 사진을 한 장 올려요." },
+  { emoji: "🎉", title: "응원 받기", description: "다른 사람들의 좋아요와 응원 댓글이 도착해요." },
+];
 
-const listHref = (page: number, view: View) => {
-  const params = new URLSearchParams();
-  if (page > 1) params.set("page", String(page));
-  if (view === "title") params.set("view", "title");
-  const query = params.toString();
-  return query ? `/?${query}` : "/";
-};
+const RECENT_COUNT = 6;
 
-export default async function Page(props: PageProps<"/">) {
-  const { page: pageParam, view: viewParam } = await props.searchParams;
-  const page = Math.max(1, Math.floor(Number(pageParam)) || 1);
-  const view: View = viewParam === "title" ? "title" : "photo";
-
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-
-  const from = (page - 1) * PAGE_SIZE;
-  const { data: posts, count, error } = await supabase
-    .from("posts")
-    .select(
-      "id, title, image_path, created_at, profiles(nickname, avatar_url), likes(count), comments(count)",
-      { count: "exact" },
-    )
-    .order("created_at", { ascending: false })
-    .order("id", { ascending: false })
-    .range(from, from + PAGE_SIZE - 1)
-    .overrideTypes<PostListItem[], { merge: false }>();
-
-  // 글 수보다 큰 페이지를 요청하면 PostgREST가 PGRST103 오류를 내므로 마지막 페이지로 보낸다
-  if (error?.code === "PGRST103") {
-    const { count: total } = await supabase.from("posts").select("*", { count: "exact", head: true });
-    redirect(listHref(Math.ceil((total ?? 0) / PAGE_SIZE), view));
-  }
-
-  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
-
-  if (error) {
-    return <p className="text-red-600">게시글을 불러오지 못했습니다.</p>;
-  }
-
-  if (!posts.length) {
-    return (
-      <div className="py-24 text-center text-neutral-500">
-        <p>아직 게시글이 없습니다.</p>
-        <Link href="/write" className="mt-3 inline-block underline">
-          첫 글을 작성해 보세요
-        </Link>
-      </div>
-    );
-  }
+export default async function Page() {
+  const supabase = createClient(await cookies());
+  const [
+    {
+      data: { user },
+    },
+    { data: recentPosts },
+  ] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase
+      .from("posts")
+      .select(POST_LIST_SELECT)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(RECENT_COUNT)
+      .overrideTypes<PostListItem[], { merge: false }>(),
+  ]);
+  const loggedIn = !!user;
 
   return (
-    <>
-      <ViewToggle page={page} view={view} />
-      {view === "photo" ? <PhotoGrid posts={posts} /> : <TitleList posts={posts} />}
-      {totalPages > 1 && <Pagination page={page} totalPages={totalPages} view={view} />}
-    </>
-  );
-}
+    <div className="space-y-16 sm:space-y-24">
+      {/* 1. 메인 영역 */}
+      <section className="pt-2 text-center sm:pt-6">
+        <p className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1 text-sm font-semibold text-brand">
+          🌱 다이어트 사진 게시판
+        </p>
+        <h1 className="mx-auto mt-5 max-w-2xl text-3xl leading-tight font-bold tracking-tight break-keep sm:text-5xl">
+          혼자 하면 힘든 다이어트,
+          <br />
+          <span className="text-brand">같이 기록해요</span>
+        </h1>
+        <p className="mx-auto mt-4 max-w-xl leading-7 text-muted break-keep sm:text-lg">{SUBHEADLINE}</p>
+        <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+          {loggedIn ? (
+            <>
+              <Link href="/write" className="btn-primary px-7">
+                글쓰기
+              </Link>
+              <Link href="/board" className="btn-secondary px-7">
+                게시판 가기
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/signup" className="btn-primary px-7">
+                지금 시작하기
+              </Link>
+              <Link href="/board" className="btn-secondary px-7">
+                게시판 구경하기
+              </Link>
+            </>
+          )}
+        </div>
 
-function ViewToggle({ page, view }: { page: number; view: View }) {
-  const options: { value: View; label: string }[] = [
-    { value: "photo", label: "사진" },
-    { value: "title", label: "제목" },
-  ];
-  return (
-    <div className="mb-4 flex justify-end">
-      <div role="group" aria-label="보기 방식" className="inline-flex rounded-lg border border-neutral-200 p-0.5 dark:border-neutral-800">
-        {options.map((o) => (
-          <Link
-            key={o.value}
-            href={listHref(page, o.value)}
-            aria-current={view === o.value ? "true" : undefined}
-            className={`rounded-md px-3 py-1 text-sm transition ${
-              view === o.value
-                ? "bg-neutral-900 font-medium text-white dark:bg-white dark:text-neutral-900"
-                : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-900"
-            }`}
-          >
-            {o.label}
+        <div className="card relative mt-10 overflow-hidden">
+          <Image
+            src={heroImage}
+            alt="다이어트 전과 후의 모습을 나란히 보여주는 사진"
+            placeholder="blur"
+            sizes="(min-width: 1024px) 992px, 100vw"
+            className="aspect-[16/9] w-full object-cover sm:aspect-[21/9]"
+            preload
+          />
+          <span className="absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-ink shadow-card sm:bottom-5 sm:left-5 sm:text-sm">
+            기록 1일차
+          </span>
+          <span className="absolute right-3 bottom-3 rounded-full bg-brand px-3 py-1 text-xs font-semibold text-white shadow-card sm:right-5 sm:bottom-5 sm:text-sm">
+            기록 100일차 🎉
+          </span>
+        </div>
+      </section>
+
+      {/* 2. 서비스 소개 */}
+      <section>
+        <SectionTitle eyebrow="서비스 소개" title="기록하고, 응원하고, 변화를 확인해요" />
+        <ul className="mt-8 grid gap-4 sm:grid-cols-3 sm:gap-5">
+          {FEATURES.map((f) => (
+            <li key={f.title} className="card p-6 sm:p-7">
+              <span aria-hidden="true" className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-soft text-3xl">
+                {f.emoji}
+              </span>
+              <h3 className="mt-5 text-lg font-bold">{f.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-muted break-keep">{f.description}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* 3. 이용 방법 */}
+      <section>
+        <SectionTitle eyebrow="이용 방법" title="세 단계면 충분해요" />
+        <ol className="mt-8 grid gap-4 sm:grid-cols-3 sm:gap-5">
+          {STEPS.map((s, i) => (
+            <li key={s.title} className="card flex items-start gap-4 p-5 sm:flex-col sm:p-7">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-lg font-bold text-white">
+                {i + 1}
+              </span>
+              <div>
+                <h3 className="font-bold">
+                  <span aria-hidden="true">{s.emoji} </span>
+                  {s.title}
+                </h3>
+                <p className="mt-1 text-sm leading-6 text-muted break-keep">{s.description}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      {/* 4. 최근 게시글 미리보기 */}
+      <section>
+        <div className="flex items-end justify-between gap-4">
+          <SectionTitle eyebrow="최근 기록" title="지금 올라온 다이어트 기록" align="left" />
+          <Link href="/board" className="shrink-0 text-sm font-semibold text-brand hover:underline">
+            더 보기 →
           </Link>
-        ))}
-      </div>
+        </div>
+        <div className="mt-8">
+          {recentPosts?.length ? (
+            <PhotoGrid posts={recentPosts} gridClassName="grid-cols-2 sm:grid-cols-3" />
+          ) : (
+            <div className="card flex flex-col items-center px-6 py-14 text-center text-muted">
+              <span aria-hidden="true" className="text-4xl">🥗</span>
+              <p className="mt-3">아직 올라온 기록이 없어요. 첫 기록의 주인공이 되어 보세요!</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* 5. 마지막 영역 */}
+      <section className="rounded-2xl bg-brand px-6 py-14 text-center text-white sm:py-20">
+        <p aria-hidden="true" className="text-4xl">💪</p>
+        <h2 className="mt-4 text-2xl font-bold sm:text-3xl">오늘부터 기록해볼까요?</h2>
+        <p className="mt-3 text-white/85 break-keep">첫 사진 한 장이 변화의 시작이에요.</p>
+        <Link
+          href={loggedIn ? "/write" : "/signup"}
+          className="mt-8 inline-flex items-center justify-center rounded-2xl bg-white px-8 py-3 font-semibold text-brand shadow-card transition hover:bg-brand-soft focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50"
+        >
+          {loggedIn ? "오늘의 기록 올리기" : "무료로 시작하기"}
+        </Link>
+      </section>
     </div>
   );
 }
 
-function PhotoGrid({ posts }: { posts: PostListItem[] }) {
+function SectionTitle({
+  eyebrow,
+  title,
+  align = "center",
+}: {
+  eyebrow: string;
+  title: string;
+  align?: "center" | "left";
+}) {
   return (
-    <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-      {posts.map((post) => (
-        <li key={post.id}>
-          <Link
-            href={`/posts/${post.id}`}
-            className="group block overflow-hidden rounded-xl border border-neutral-200 transition hover:shadow-md dark:border-neutral-800"
-          >
-            <div className="relative aspect-square overflow-hidden bg-neutral-100 dark:bg-neutral-900">
-              <Image
-                src={imageUrl(post.image_path)}
-                alt={post.title}
-                fill
-                sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-                className="object-cover transition group-hover:scale-105"
-              />
-            </div>
-            <div className="p-3">
-              <h2 className="truncate font-medium">{post.title}</h2>
-              <p className="mt-1 flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
-                <Avatar src={post.profiles?.avatar_url} name={post.profiles?.nickname || "?"} size={18} />
-                <span className="truncate">{post.profiles?.nickname || "알 수 없음"}</span>
-              </p>
-              <div className="mt-1 flex items-center justify-between gap-2 text-xs text-neutral-500">
-                <span>{formatDate(post.created_at)}</span>
-                <Counts post={post} />
-              </div>
-            </div>
-          </Link>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function TitleList({ posts }: { posts: PostListItem[] }) {
-  return (
-    <ul className="divide-y divide-neutral-200 border-y border-neutral-200 dark:divide-neutral-800 dark:border-neutral-800">
-      {posts.map((post) => (
-        <li key={post.id}>
-          <Link
-            href={`/posts/${post.id}`}
-            className="flex items-center gap-4 px-2 py-3 transition hover:bg-neutral-50 dark:hover:bg-neutral-900"
-          >
-            <h2 className="flex min-w-0 flex-1 items-center gap-1.5 font-medium">
-              <span className="truncate">{post.title}</span>
-              {(post.comments[0]?.count ?? 0) > 0 && (
-                <span className="shrink-0 text-sm text-red-500" aria-label={`댓글 ${post.comments[0].count}개`}>
-                  [{post.comments[0].count}]
-                </span>
-              )}
-            </h2>
-            <span className="hidden max-w-32 items-center gap-1.5 text-xs text-neutral-600 sm:flex dark:text-neutral-400">
-              <Avatar src={post.profiles?.avatar_url} name={post.profiles?.nickname || "?"} size={18} />
-              <span className="truncate">{post.profiles?.nickname || "알 수 없음"}</span>
-            </span>
-            <span className="hidden shrink-0 text-xs text-neutral-500 sm:inline">{formatDate(post.created_at)}</span>
-            <span className="text-xs text-neutral-500">
-              <Counts post={post} showComments={false} />
-            </span>
-          </Link>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function Counts({ post, showComments = true }: { post: PostListItem; showComments?: boolean }) {
-  const likes = post.likes[0]?.count ?? 0;
-  const comments = post.comments[0]?.count ?? 0;
-  return (
-    <span className="flex shrink-0 items-center gap-2">
-      <span className="flex items-center gap-0.5" aria-label={`좋아요 ${likes}개`}>
-        <svg aria-hidden="true" viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinejoin="round" d="M12 21s-7.5-4.6-9.5-9.2C1.2 8.6 3.2 5 6.6 5c2.1 0 3.5 1.1 4.4 2.5h2C13.9 6.1 15.3 5 17.4 5c3.4 0 5.4 3.6 4.1 6.8C19.5 16.4 12 21 12 21z" />
-        </svg>
-        {likes}
-      </span>
-      {showComments && (
-        <span className="flex items-center gap-0.5" aria-label={`댓글 ${comments}개`}>
-          <svg aria-hidden="true" viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinejoin="round" d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" />
-          </svg>
-          {comments}
-        </span>
-      )}
-    </span>
-  );
-}
-
-function Pagination({ page, totalPages, view }: { page: number; totalPages: number; view: View }) {
-  const itemClass = "flex h-9 min-w-9 items-center justify-center rounded-lg px-3 text-sm";
-  const linkClass = `${itemClass} text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-900`;
-  const disabledClass = `${itemClass} text-neutral-300 dark:text-neutral-700`;
-
-  return (
-    <nav aria-label="페이지 이동" className="mt-8 flex items-center justify-center gap-1">
-      {page > 1 ? (
-        <Link href={listHref(page - 1, view)} className={linkClass}>
-          이전
-        </Link>
-      ) : (
-        <span className={disabledClass}>이전</span>
-      )}
-      {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) =>
-        n === page ? (
-          <span
-            key={n}
-            aria-current="page"
-            className={`${itemClass} bg-neutral-900 font-medium text-white dark:bg-white dark:text-neutral-900`}
-          >
-            {n}
-          </span>
-        ) : (
-          <Link key={n} href={listHref(n, view)} className={linkClass}>
-            {n}
-          </Link>
-        ),
-      )}
-      {page < totalPages ? (
-        <Link href={listHref(page + 1, view)} className={linkClass}>
-          다음
-        </Link>
-      ) : (
-        <span className={disabledClass}>다음</span>
-      )}
-    </nav>
+    <div className={align === "center" ? "text-center" : ""}>
+      <p className="text-sm font-semibold text-brand">{eyebrow}</p>
+      <h2 className="mt-2 text-2xl font-bold break-keep sm:text-3xl">{title}</h2>
+    </div>
   );
 }

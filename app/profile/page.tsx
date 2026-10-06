@@ -19,11 +19,6 @@ import {
 
 const MAX_SIZE = 5 * 1024 * 1024;
 
-const inputClass =
-  "w-full rounded-lg border border-neutral-300 bg-transparent px-3 py-2 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-300";
-const buttonClass =
-  "w-full rounded-lg bg-neutral-900 py-3 font-medium text-white transition hover:bg-neutral-700 disabled:cursor-not-allowed disabled:bg-neutral-300 dark:bg-white dark:text-neutral-900 dark:disabled:bg-neutral-700 dark:disabled:text-neutral-400";
-
 const PASSWORD_ERROR_MESSAGES: Record<string, string> = {
   weak_password: "비밀번호가 너무 약합니다. 6자 이상으로 입력해 주세요.",
   same_password: "기존 비밀번호와 다른 비밀번호를 입력해 주세요.",
@@ -175,18 +170,18 @@ export default function ProfilePage() {
   const name = displayName(trimmedNickname || profile?.nickname, user.email);
 
   return (
-    <div className="mx-auto max-w-sm space-y-10 pt-8">
-      <form onSubmit={onSaveProfile} noValidate className="space-y-5">
+    <div className="mx-auto max-w-md space-y-5 sm:mt-4">
+      <form onSubmit={onSaveProfile} noValidate className="card space-y-5 p-6 sm:p-8">
         <h1 className="text-2xl font-bold">내 정보</h1>
 
         <div className="flex flex-col items-center gap-3">
           {preview ? (
             // eslint-disable-next-line @next/next/no-img-element -- 로컬 blob 미리보기
-            <img src={preview} alt="미리보기" className="h-24 w-24 rounded-full object-cover" />
+            <img src={preview} alt="미리보기" className="h-24 w-24 rounded-full object-cover ring-4 ring-brand-soft" />
           ) : (
             <Avatar src={profile?.avatar_url} name={name} size={96} />
           )}
-          <label className="cursor-pointer text-sm text-neutral-600 underline hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white">
+          <label className="btn-secondary px-4 py-2 text-sm">
             {preview ? "다른 사진 선택" : "프로필 사진 변경"}
             <input
               type="file"
@@ -198,7 +193,7 @@ export default function ProfilePage() {
         </div>
 
         <div>
-          <label htmlFor="email" className="mb-2 block text-sm font-medium">
+          <label htmlFor="email" className="mb-2 block text-sm font-semibold">
             이메일
           </label>
           <input
@@ -206,12 +201,12 @@ export default function ProfilePage() {
             value={user.email ?? ""}
             readOnly
             disabled
-            className={`${inputClass} cursor-not-allowed text-neutral-500`}
+            className="input-field cursor-not-allowed bg-page text-muted"
           />
         </div>
 
         <div>
-          <label htmlFor="nickname" className="mb-2 block text-sm font-medium">
+          <label htmlFor="nickname" className="mb-2 block text-sm font-semibold">
             닉네임
           </label>
           <input
@@ -220,25 +215,25 @@ export default function ProfilePage() {
             onChange={(e) => setNickname(e.target.value)}
             maxLength={NICKNAME_MAX}
             placeholder={`${NICKNAME_MIN}~${NICKNAME_MAX}자`}
-            className={inputClass}
+            className="input-field"
           />
         </div>
 
-        <button type="submit" disabled={!canSaveProfile} className={buttonClass}>
+        <button type="submit" disabled={!canSaveProfile} className="btn-primary w-full">
           {savingProfile ? "저장 중..." : "저장"}
         </button>
       </form>
 
-      <section className="space-y-5 border-t border-neutral-200 pt-8 dark:border-neutral-800">
-        <h2 className="text-lg font-semibold">비밀번호 변경</h2>
+      <section className="card space-y-5 p-6 sm:p-8">
+        <h2 className="text-lg font-bold">비밀번호 변경</h2>
         {isKakaoUser(user) ? (
-          <p className="rounded-lg bg-neutral-50 px-4 py-3 text-sm text-neutral-500 dark:bg-neutral-900">
+          <p className="rounded-2xl bg-[#FEE500]/25 px-4 py-3 text-sm text-ink">
             카카오 계정으로 로그인 중이에요
           </p>
         ) : (
           <form onSubmit={onSavePassword} noValidate className="space-y-5">
             <div>
-              <label htmlFor="password" className="mb-2 block text-sm font-medium">
+              <label htmlFor="password" className="mb-2 block text-sm font-semibold">
                 새 비밀번호
               </label>
               <input
@@ -248,11 +243,11 @@ export default function ProfilePage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="6자 이상"
-                className={inputClass}
+                className="input-field"
               />
             </div>
             <div>
-              <label htmlFor="passwordConfirm" className="mb-2 block text-sm font-medium">
+              <label htmlFor="passwordConfirm" className="mb-2 block text-sm font-semibold">
                 비밀번호 확인
               </label>
               <input
@@ -262,13 +257,13 @@ export default function ProfilePage() {
                 value={passwordConfirm}
                 onChange={(e) => setPasswordConfirm(e.target.value)}
                 placeholder="새 비밀번호를 한 번 더 입력하세요"
-                className={inputClass}
+                className="input-field"
               />
               {passwordMismatch && (
                 <p className="mt-2 text-sm text-red-600">비밀번호가 일치하지 않습니다.</p>
               )}
             </div>
-            <button type="submit" disabled={!canSavePassword} className={buttonClass}>
+            <button type="submit" disabled={!canSavePassword} className="btn-primary w-full">
               {savingPassword ? "변경 중..." : "비밀번호 변경"}
             </button>
           </form>

@@ -31,7 +31,7 @@ export function WriteButton() {
     <Link
       href="/write"
       onClick={onClick}
-      className="rounded-full bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-neutral-700 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-300"
+      className="btn-primary px-3.5 py-2 text-sm sm:px-4"
     >
       글쓰기
     </Link>

@@ -28,7 +28,7 @@ export function DeletePostButton({ postId, imagePath }: { postId: string; imageP
     supabase.storage.from(POST_IMAGES_BUCKET).remove([imagePath]);
 
     showToast("게시글이 삭제되었습니다", "success");
-    router.push("/");
+    router.push("/board");
     router.refresh();
   };
 
@@ -37,7 +37,7 @@ export function DeletePostButton({ postId, imagePath }: { postId: string; imageP
       type="button"
       onClick={onDelete}
       disabled={deleting}
-      className="cursor-pointer text-sm text-neutral-500 hover:text-red-600 disabled:cursor-wait"
+      className="cursor-pointer text-sm text-muted hover:text-red-600 disabled:cursor-wait"
     >
       {deleting ? "삭제 중..." : "삭제"}
     </button>

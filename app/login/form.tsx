@@ -25,9 +25,6 @@ const toKoreanMessage = (error: AuthError) => {
   );
 };
 
-const inputClass =
-  "w-full rounded-lg border border-neutral-300 bg-transparent px-3 py-2 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-300";
-
 const OAUTH_ERROR_MESSAGES: Record<string, string> = {
   oauth_cancelled: "카카오 로그인이 취소되었습니다.",
   oauth_failed: "카카오 로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.",
@@ -58,7 +55,7 @@ export function LoginForm({ oauthError }: { oauthError?: string }) {
     setKakaoLoading(true);
     const { error } = await createClient().auth.signInWithOAuth({
       provider: "kakao",
-      options: { redirectTo: `${window.location.origin}/auth/callback?next=/` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=/board` },
     });
     // 성공하면 카카오 로그인 화면으로 이동하므로 실패한 경우만 처리
     if (error) {
@@ -81,16 +78,16 @@ export function LoginForm({ oauthError }: { oauthError?: string }) {
       return;
     }
 
-    router.push("/");
+    router.push("/board");
     router.refresh();
   };
 
   return (
-    <form onSubmit={onSubmit} noValidate className="mx-auto max-w-sm space-y-5 pt-8">
+    <form onSubmit={onSubmit} noValidate className="card mx-auto max-w-md space-y-5 p-6 sm:mt-4 sm:p-8">
       <h1 className="text-2xl font-bold">로그인</h1>
 
       <div>
-        <label htmlFor="email" className="mb-2 block text-sm font-medium">
+        <label htmlFor="email" className="mb-2 block text-sm font-semibold">
           이메일
         </label>
         <input
@@ -100,12 +97,12 @@ export function LoginForm({ oauthError }: { oauthError?: string }) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
-          className={inputClass}
+          className="input-field"
         />
       </div>
 
       <div>
-        <label htmlFor="password" className="mb-2 block text-sm font-medium">
+        <label htmlFor="password" className="mb-2 block text-sm font-semibold">
           비밀번호
         </label>
         <input
@@ -114,29 +111,29 @@ export function LoginForm({ oauthError }: { oauthError?: string }) {
           autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className={inputClass}
+          className="input-field"
         />
       </div>
 
       <button
         type="submit"
         disabled={!canSubmit}
-        className="w-full rounded-lg bg-neutral-900 py-3 font-medium text-white transition hover:bg-neutral-700 disabled:cursor-not-allowed disabled:bg-neutral-300 dark:bg-white dark:text-neutral-900 dark:disabled:bg-neutral-700 dark:disabled:text-neutral-400"
+        className="btn-primary w-full"
       >
         {submitting ? "로그인 중..." : "로그인"}
       </button>
 
-      <div className="flex items-center gap-3 text-xs text-neutral-400">
-        <span className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
+      <div className="flex items-center gap-3 text-xs text-muted">
+        <span className="h-px flex-1 bg-line" />
         또는
-        <span className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
+        <span className="h-px flex-1 bg-line" />
       </div>
 
       <button
         type="button"
         onClick={onKakaoLogin}
         disabled={kakaoLoading}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#FEE500] py-3 font-medium text-black/85 transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#FEE500] py-3 font-semibold text-black/85 transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
           <path d="M12 3C6.48 3 2 6.54 2 10.9c0 2.8 1.86 5.27 4.66 6.67-.15.53-.98 3.4-1.01 3.62 0 0-.02.17.09.24.11.06.24.01.24.01.32-.04 3.7-2.43 4.28-2.84.57.08 1.15.12 1.74.12 5.52 0 10-3.54 10-7.9S17.52 3 12 3z" />
@@ -145,14 +142,14 @@ export function LoginForm({ oauthError }: { oauthError?: string }) {
       </button>
 
       <p className="text-center text-sm">
-        <Link href="/forgot-password" className="text-neutral-500 underline hover:text-neutral-900 dark:hover:text-white">
+        <Link href="/forgot-password" className="text-muted transition hover:text-brand">
           비밀번호를 잊으셨나요?
         </Link>
       </p>
 
-      <p className="text-center text-sm text-neutral-500">
+      <p className="text-center text-sm text-muted">
         아직 회원이 아니신가요?{" "}
-        <Link href="/signup" className="font-medium text-neutral-900 underline dark:text-white">
+        <Link href="/signup" className="font-semibold text-brand hover:underline">
           회원가입
         </Link>
       </p>

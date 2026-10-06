@@ -99,19 +99,24 @@ export default function WritePage() {
   if (!authChecked) return null;
 
   return (
-    <form onSubmit={onSubmit} className="mx-auto max-w-2xl space-y-6">
+    <form onSubmit={onSubmit} className="card mx-auto max-w-2xl space-y-6 p-5 sm:p-8">
       <h1 className="text-2xl font-bold">글쓰기</h1>
 
       <div>
-        <span className="mb-2 block text-sm font-medium">
-          사진 <span className="text-red-500">*</span>
+        <span className="mb-2 block text-sm font-semibold">
+          사진 <span className="text-coral">*</span>
         </span>
-        <label className="flex aspect-video cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 hover:border-neutral-400 dark:border-neutral-700 dark:bg-neutral-900">
+        <label className="flex aspect-[4/3] cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-line bg-page transition hover:border-brand hover:bg-brand-soft/40 has-[:focus-visible]:border-brand has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-brand/20 sm:aspect-video">
           {preview ? (
             // eslint-disable-next-line @next/next/no-img-element -- 로컬 blob 미리보기
             <img src={preview} alt="미리보기" className="h-full w-full object-contain" />
           ) : (
-            <span className="text-sm text-neutral-500">클릭해서 사진 선택 (최대 10MB)</span>
+            <span className="flex flex-col items-center gap-2 text-sm text-muted">
+              <span aria-hidden="true" className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-2xl">
+                📷
+              </span>
+              클릭해서 사진 선택 (최대 10MB)
+            </span>
           )}
           <input
             type="file"
@@ -123,8 +128,8 @@ export default function WritePage() {
       </div>
 
       <div>
-        <label htmlFor="title" className="mb-2 block text-sm font-medium">
-          제목 <span className="text-red-500">*</span>
+        <label htmlFor="title" className="mb-2 block text-sm font-semibold">
+          제목 <span className="text-coral">*</span>
         </label>
         <input
           id="title"
@@ -132,12 +137,12 @@ export default function WritePage() {
           onChange={(e) => setTitle(e.target.value)}
           maxLength={100}
           placeholder="제목을 입력하세요"
-          className="w-full rounded-lg border border-neutral-300 bg-transparent px-3 py-2 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-300"
+          className="input-field"
         />
       </div>
 
       <div>
-        <label htmlFor="content" className="mb-2 block text-sm font-medium">
+        <label htmlFor="content" className="mb-2 block text-sm font-semibold">
           내용
         </label>
         <textarea
@@ -147,16 +152,16 @@ export default function WritePage() {
           maxLength={5000}
           rows={8}
           placeholder="오늘의 식단, 운동, 변화 등을 기록해 보세요"
-          className="w-full resize-y rounded-lg border border-neutral-300 bg-transparent px-3 py-2 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-300"
+          className="input-field resize-y"
         />
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="rounded-2xl bg-coral-soft px-4 py-3 text-sm text-red-600">{error}</p>}
 
       <button
         type="submit"
         disabled={!canSubmit}
-        className="w-full rounded-lg bg-neutral-900 py-3 font-medium text-white transition hover:bg-neutral-700 disabled:cursor-not-allowed disabled:bg-neutral-300 dark:bg-white dark:text-neutral-900 dark:disabled:bg-neutral-700 dark:disabled:text-neutral-400"
+        className="btn-primary w-full"
       >
         {submitting ? "등록 중..." : "등록"}
       </button>

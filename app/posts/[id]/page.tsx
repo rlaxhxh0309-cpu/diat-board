@@ -78,40 +78,40 @@ export default async function Page(props: PageProps<"/posts/[id]">) {
   ]);
 
   return (
-    <article className="mx-auto max-w-3xl">
-      <Link href="/" className="text-sm text-neutral-500 hover:underline">
+    <article className="mx-auto max-w-2xl">
+      <Link href="/board" className="text-sm text-muted transition hover:text-brand">
         ← 목록으로
       </Link>
-      <h1 className="mt-4 text-2xl font-bold break-words">{post.title}</h1>
-      <div className="mt-2 flex items-center gap-2 text-sm text-neutral-500">
-        <Avatar src={post.profiles?.avatar_url} name={post.profiles?.nickname || "?"} size={24} />
-        <span className="font-medium text-neutral-700 dark:text-neutral-300">
-          {post.profiles?.nickname || "알 수 없음"}
-        </span>
-        <span>{formatDate(post.created_at)}</span>
-        {user && post.user_id === user.id && (
-          <span className="ml-auto flex items-center gap-3">
-            <Link href={`/posts/${post.id}/edit`} className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white">
-              수정
-            </Link>
-            <DeletePostButton postId={post.id} imagePath={post.image_path} />
-          </span>
-        )}
+      <div className="card mt-4 overflow-hidden">
+        <div className="bg-page">
+          <Image
+            src={imageUrl(post.image_path)}
+            alt={post.title}
+            width={1200}
+            height={1200}
+            sizes="(min-width: 672px) 672px, 100vw"
+            className="h-auto max-h-[80vh] w-full object-contain"
+            preload
+          />
+        </div>
+        <div className="p-5 sm:p-8">
+          <h1 className="text-2xl font-bold break-words">{post.title}</h1>
+          <div className="mt-3 flex items-center gap-2 text-sm text-muted">
+            <Avatar src={post.profiles?.avatar_url} name={post.profiles?.nickname || "?"} size={28} />
+            <span className="font-semibold text-ink">{post.profiles?.nickname || "알 수 없음"}</span>
+            <span>{formatDate(post.created_at)}</span>
+            {user && post.user_id === user.id && (
+              <span className="ml-auto flex items-center gap-3">
+                <Link href={`/posts/${post.id}/edit`} className="text-sm text-muted transition hover:text-brand">
+                  수정
+                </Link>
+                <DeletePostButton postId={post.id} imagePath={post.image_path} />
+              </span>
+            )}
+          </div>
+          {post.content && <p className="mt-5 whitespace-pre-wrap break-words leading-7">{post.content}</p>}
+        </div>
       </div>
-      <div className="mt-6 overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-900">
-        <Image
-          src={imageUrl(post.image_path)}
-          alt={post.title}
-          width={1200}
-          height={1200}
-          sizes="(min-width: 768px) 768px, 100vw"
-          className="h-auto max-h-[80vh] w-full object-contain"
-          preload
-        />
-      </div>
-      {post.content && (
-        <p className="mt-6 whitespace-pre-wrap break-words leading-7">{post.content}</p>
-      )}
       <Reactions
         postId={post.id}
         userId={user?.id ?? null}

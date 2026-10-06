@@ -16,9 +16,6 @@ const toKoreanMessage = (error: AuthError) => {
   return "메일 발송에 실패했습니다. 잠시 후 다시 시도해 주세요.";
 };
 
-const inputClass =
-  "w-full rounded-lg border border-neutral-300 bg-transparent px-3 py-2 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-300";
-
 export function ForgotPasswordForm({ invalidLink }: { invalidLink: boolean }) {
   const showToast = useToast();
   const [email, setEmail] = useState("");
@@ -55,16 +52,16 @@ export function ForgotPasswordForm({ invalidLink }: { invalidLink: boolean }) {
   };
 
   return (
-    <form onSubmit={onSubmit} noValidate className="mx-auto max-w-sm space-y-5 pt-8">
+    <form onSubmit={onSubmit} noValidate className="card mx-auto max-w-md space-y-5 p-6 sm:mt-4 sm:p-8">
       <div>
         <h1 className="text-2xl font-bold">비밀번호 찾기</h1>
-        <p className="mt-2 text-sm text-neutral-500">
+        <p className="mt-2 text-sm text-muted">
           가입한 이메일을 입력하면 비밀번호 재설정 링크를 보내드립니다.
         </p>
       </div>
 
       <div>
-        <label htmlFor="email" className="mb-2 block text-sm font-medium">
+        <label htmlFor="email" className="mb-2 block text-sm font-semibold">
           이메일
         </label>
         <input
@@ -74,26 +71,26 @@ export function ForgotPasswordForm({ invalidLink }: { invalidLink: boolean }) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
-          className={inputClass}
+          className="input-field"
         />
       </div>
 
       <button
         type="submit"
         disabled={!canSubmit}
-        className="w-full rounded-lg bg-neutral-900 py-3 font-medium text-white transition hover:bg-neutral-700 disabled:cursor-not-allowed disabled:bg-neutral-300 dark:bg-white dark:text-neutral-900 dark:disabled:bg-neutral-700 dark:disabled:text-neutral-400"
+        className="btn-primary w-full"
       >
         {submitting ? "발송 중..." : "비밀번호 리셋 링크 발송"}
       </button>
 
       {sent && (
-        <p className="rounded-lg bg-neutral-100 p-3 text-sm text-neutral-600 dark:bg-neutral-900 dark:text-neutral-400">
+        <p className="rounded-2xl bg-page p-3 text-sm text-muted">
           메일함을 확인해 주세요. 링크는 이 브라우저에서 열어야 합니다.
         </p>
       )}
 
-      <p className="text-center text-sm text-neutral-500">
-        <Link href="/login" className="underline">
+      <p className="text-center text-sm text-muted">
+        <Link href="/login" className="font-semibold text-brand hover:underline">
           로그인으로 돌아가기
         </Link>
       </p>

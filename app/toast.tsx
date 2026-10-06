@@ -30,10 +30,18 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           <div
             key={t.id}
             role={t.type === "error" ? "alert" : "status"}
-            className={`toast-in rounded-lg px-4 py-3 text-sm font-medium text-white shadow-lg ${
-              t.type === "error" ? "bg-red-600" : "bg-neutral-900 dark:bg-neutral-700"
+            className={`toast-in flex max-w-sm items-center gap-2.5 rounded-2xl border bg-white px-4 py-3 text-sm font-medium text-ink shadow-lg ${
+              t.type === "error" ? "border-coral/40" : "border-brand/40"
             }`}
           >
+            <span
+              aria-hidden="true"
+              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${
+                t.type === "error" ? "bg-coral" : "bg-brand"
+              }`}
+            >
+              {t.type === "error" ? "!" : "✓"}
+            </span>
             {t.message}
           </div>
         ))}

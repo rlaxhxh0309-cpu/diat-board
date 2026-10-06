@@ -96,87 +96,89 @@ export function Reactions({
   };
 
   return (
-    <section className="mt-8 border-t border-neutral-200 pt-6 dark:border-neutral-800">
-      <button
-        type="button"
-        onClick={onToggleLike}
-        disabled={liking}
-        aria-pressed={liked}
-        className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition disabled:cursor-wait ${
-          liked
-            ? "border-red-200 bg-red-50 text-red-600 dark:border-red-900 dark:bg-red-950 dark:text-red-400"
-            : "border-neutral-300 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-900"
-        }`}
-      >
-        <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill={liked ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2}>
-          <path strokeLinejoin="round" d="M12 21s-7.5-4.6-9.5-9.2C1.2 8.6 3.2 5 6.6 5c2.1 0 3.5 1.1 4.4 2.5h2C13.9 6.1 15.3 5 17.4 5c3.4 0 5.4 3.6 4.1 6.8C19.5 16.4 12 21 12 21z" />
-        </svg>
-        좋아요 {likeCount}
-      </button>
+    <>
+      <div className="mt-5 flex justify-center">
+        <button
+          type="button"
+          onClick={onToggleLike}
+          disabled={liking}
+          aria-pressed={liked}
+          className={`inline-flex cursor-pointer items-center gap-2 rounded-2xl border px-6 py-3 font-semibold shadow-card transition disabled:cursor-wait ${
+            liked ? "border-coral bg-coral-soft text-coral" : "border-line bg-white text-muted hover:border-coral hover:text-coral"
+          }`}
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill={liked ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2}>
+            <path strokeLinejoin="round" d="M12 21s-7.5-4.6-9.5-9.2C1.2 8.6 3.2 5 6.6 5c2.1 0 3.5 1.1 4.4 2.5h2C13.9 6.1 15.3 5 17.4 5c3.4 0 5.4 3.6 4.1 6.8C19.5 16.4 12 21 12 21z" />
+          </svg>
+          좋아요 {likeCount}
+        </button>
+      </div>
 
-      <h2 className="mt-8 text-lg font-semibold">
-        응원 댓글 <span className="text-neutral-500">{comments.length}</span>
-      </h2>
+      <section className="card mt-5 p-5 sm:p-8">
+        <h2 className="text-lg font-bold">
+          응원 댓글 <span className="text-brand">{comments.length}</span>
+        </h2>
 
-      {comments.length === 0 ? (
-        <p className="mt-3 text-sm text-neutral-500">첫 응원 댓글을 남겨 주세요!</p>
-      ) : (
-        <ul className="mt-3 divide-y divide-neutral-200 dark:divide-neutral-800">
-          {comments.map((c) => (
-            <li key={c.id} className="py-3">
-              <div className="flex items-center gap-2 text-xs text-neutral-500">
-                <Avatar src={c.profiles?.avatar_url} name={c.profiles?.nickname || "?"} size={20} />
-                <span className="font-medium text-neutral-700 dark:text-neutral-300">
-                  {c.profiles?.nickname || "알 수 없음"}
-                </span>
-                <span>{formatDateTime(c.created_at)}</span>
-                {c.user_id === userId && (
-                  <button
-                    type="button"
-                    onClick={() => onDeleteComment(c.id)}
-                    className="ml-auto cursor-pointer hover:text-red-600"
-                  >
-                    삭제
-                  </button>
-                )}
-              </div>
-              <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6">{c.content}</p>
-            </li>
-          ))}
-        </ul>
-      )}
+        {comments.length === 0 ? (
+          <p className="mt-3 text-sm text-muted">첫 응원 댓글을 남겨 주세요! 💪</p>
+        ) : (
+          <ul className="mt-3 divide-y divide-line">
+            {comments.map((c) => (
+              <li key={c.id} className="py-4">
+                <div className="flex items-center gap-2 text-xs text-muted">
+                  <Avatar src={c.profiles?.avatar_url} name={c.profiles?.nickname || "?"} size={24} />
+                  <span className="font-semibold text-ink">
+                    {c.profiles?.nickname || "알 수 없음"}
+                  </span>
+                  <span>{formatDateTime(c.created_at)}</span>
+                  {c.user_id === userId && (
+                    <button
+                      type="button"
+                      onClick={() => onDeleteComment(c.id)}
+                      className="ml-auto cursor-pointer hover:text-red-600"
+                    >
+                      삭제
+                    </button>
+                  )}
+                </div>
+                <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6">{c.content}</p>
+              </li>
+            ))}
+          </ul>
+        )}
 
-      {userId ? (
-        <form onSubmit={onSubmitComment} className="mt-4 space-y-2">
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            maxLength={MAX_COMMENT}
-            rows={3}
-            placeholder="따뜻한 응원 한마디를 남겨 주세요"
-            className="w-full resize-y rounded-lg border border-neutral-300 bg-transparent px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-300"
-          />
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-neutral-400">
-              {content.length}/{MAX_COMMENT}
-            </span>
-            <button
-              type="submit"
-              disabled={!content.trim() || submitting}
-              className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:cursor-not-allowed disabled:bg-neutral-300 dark:bg-white dark:text-neutral-900 dark:disabled:bg-neutral-700 dark:disabled:text-neutral-400"
-            >
-              {submitting ? "등록 중..." : "댓글 등록"}
-            </button>
-          </div>
-        </form>
-      ) : (
-        <p className="mt-4 rounded-lg bg-neutral-50 px-4 py-3 text-sm text-neutral-500 dark:bg-neutral-900">
-          <Link href="/login" className="font-medium text-neutral-900 underline dark:text-white">
-            로그인
-          </Link>
-          하면 좋아요와 응원 댓글을 남길 수 있습니다.
-        </p>
-      )}
-    </section>
+        {userId ? (
+          <form onSubmit={onSubmitComment} className="mt-4 space-y-2">
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              maxLength={MAX_COMMENT}
+              rows={3}
+              placeholder="따뜻한 응원 한마디를 남겨 주세요"
+              className="input-field resize-y text-sm"
+            />
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted">
+                {content.length}/{MAX_COMMENT}
+              </span>
+              <button
+                type="submit"
+                disabled={!content.trim() || submitting}
+                className="btn-primary px-4 py-2 text-sm"
+              >
+                {submitting ? "등록 중..." : "댓글 등록"}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <p className="mt-4 rounded-2xl bg-brand-soft px-4 py-3 text-sm text-ink">
+            <Link href="/login" className="font-semibold text-brand underline">
+              로그인
+            </Link>
+            하면 좋아요와 응원 댓글을 남길 수 있습니다.
+          </p>
+        )}
+      </section>
+    </>
   );
 }
