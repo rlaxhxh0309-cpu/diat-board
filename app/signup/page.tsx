@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { AuthError } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
 import { useToast } from "@/app/toast";
+import { NICKNAME_MAX, NICKNAME_MIN } from "@/utils/profile";
 
 const ERROR_MESSAGES: Record<string, string> = {
   user_already_exists: "이미 가입된 이메일입니다.",
@@ -35,11 +36,13 @@ export default function SignupPage() {
   const router = useRouter();
   const showToast = useToast();
   const [email, setEmail] = useState("");
+  const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const canSubmit = !!email.trim() && !!password && !!passwordConfirm && !submitting;
+  const canSubmit =
+    !!email.trim() && !!nickname.trim() && !!password && !!passwordConfirm && !submitting;
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,9 +53,19 @@ export default function SignupPage() {
       return;
     }
 
+    if (nickname.trim().length < NICKNAME_MIN) {
+      showToast(`닉네임은 ${NICKNAME_MIN}~${NICKNAME_MAX}자로 입력해 주세요.`);
+      return;
+    }
+
     setSubmitting(true);
     const supabase = createClient();
-    const { error } = await supabase.auth.signUp({ email: email.trim(), password });
+    // 상단바(AuthNav)는 user_metadata.name을 표시한다
+    const { error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: { data: { name: nickname.trim() } },
+    });
 
     if (error) {
       showToast(toKoreanMessage(error));
@@ -80,6 +93,21 @@ export default function SignupPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
+          className={inputClass}
+        />
+      </div>
+
+      <div>
+        <label htmlFor="nickname" className="mb-2 block text-sm font-medium">
+          닉네임
+        </label>
+        <input
+          id="nickname"
+          autoComplete="nickname"
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value)}
+          maxLength={NICKNAME_MAX}
+          placeholder={`게시판에서 사용할 이름 (${NICKNAME_MIN}~${NICKNAME_MAX}자)`}
           className={inputClass}
         />
       </div>

@@ -6,21 +6,18 @@ import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
 import { useToast } from "@/app/toast";
+import { Avatar } from "@/app/avatar";
+import { displayName, getOrCreateProfile, PROFILE_UPDATED_EVENT, type Profile } from "@/utils/profile";
 
 const linkClass =
   "text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white";
-
-// 카카오 로그인은 닉네임을, 이메일 가입은 이메일을 보여준다
-const displayName = (user: User) => {
-  const meta = user.user_metadata ?? {};
-  return meta.name || meta.full_name || meta.preferred_username || user.email || "회원";
-};
 
 export function AuthNav() {
   const router = useRouter();
   const showToast = useToast();
   // undefined: 아직 확인 전, null: 비로그인
   const [user, setUser] = useState<User | null | undefined>(undefined);
+  const [profile, setProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -31,6 +28,22 @@ export function AuthNav() {
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  // 로그인 사용자의 프로필(닉네임·사진)을 불러오고, 내 정보에서 저장하면 다시 불러온다
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    const load = () =>
+      getOrCreateProfile(createClient(), user).then((p) => {
+        if (!cancelled) setProfile(p);
+      });
+    load();
+    window.addEventListener(PROFILE_UPDATED_EVENT, load);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(PROFILE_UPDATED_EVENT, load);
+    };
+  }, [user]);
 
   const onLogout = async () => {
     const { error } = await createClient().auth.signOut();
@@ -46,11 +59,16 @@ export function AuthNav() {
   if (user === undefined) return null;
 
   if (user) {
+    const name = displayName(profile?.nickname, user.email);
     return (
       <>
-        <span className="max-w-32 truncate text-sm text-neutral-500 sm:max-w-48">
-          {displayName(user)}
+        <span className="flex max-w-32 items-center gap-1.5 text-sm text-neutral-500 sm:max-w-48">
+          <Avatar src={profile?.avatar_url} name={name} size={24} />
+          <span className="truncate">{name}</span>
         </span>
+        <Link href="/profile" className={linkClass}>
+          내 정보
+        </Link>
         <button type="button" onClick={onLogout} className={`${linkClass} cursor-pointer`}>
           로그아웃
         </button>
