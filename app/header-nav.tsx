@@ -23,7 +23,8 @@ export function HeaderNav() {
         게시판
       </Link>
       <AuthNav />
-      <WriteButton />
+      {/* 랜딩 페이지에서는 상단 글쓰기 버튼을 숨긴다 */}
+      {pathname !== "/" && <WriteButton />}
     </nav>
   );
 }
